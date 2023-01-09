@@ -1,0 +1,46 @@
+swagger: "2.0"
+info:
+  title: AWS Task Api
+  description: This is my company docs made by me
+  version: 1.0
+  contact:
+    email: hrvoje.vukov@akvelon.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  servers:
+    -url: "http://localhost:4000/"
+    description: This is Aws Task Server
+
+schemes: [http,https]
+
+paths:
+  /string:
+    get:
+      summary: Returns a string
+      description: It is returned as a string
+      responses:
+        200:
+          description: Sucess
+          schema:
+            type: string
+            example: "A fake string"
+
+#File Upload
+  /upload:
+    post:
+      summary: Uploads a file
+      consumes:
+         - multipart/form-data
+      parameters:
+        - in: formData
+          name: file
+          type: file
+          required: true
+          description: The file to upload
+      responses:
+        200:
+          description: "OK"
+
+
+
