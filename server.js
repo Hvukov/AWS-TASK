@@ -1,10 +1,8 @@
-/**
- * Express node.js app
- */
 const express = require("express")
 const { request } = require("https")
 const swaggerUI = require("swagger-ui-express")
 const fs = require("fs")
+const uuidv4 = require("uuid").v4
 
 //For loading the YAML file
 const YAML = require("yamljs")
@@ -23,6 +21,9 @@ const s3 = new AWS.S3({
   region: "us-east-1",
 })
 
+const dynamoDb = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" })
+
+const sqs = new AWS.SQS({ region: "us-east-1" })
 /**
  * use is a function that takes a middleware function
  * Function will be executed every time the app receives a request to path
@@ -53,7 +54,7 @@ app.post("/upload", (req, res) => {
   if (!req.files) {
     res.status(400).send("No file uploaded")
   } else {
-    console.log("req", req)
+    console.log("req", req.files)
     // Get the uploaded file
     const uploadedFile = req.files.file
     const fileName = uploadedFile.name
@@ -73,10 +74,48 @@ app.post("/upload", (req, res) => {
         return res.status(500).send("Error uploading file to S3.")
       } else {
         console.log(`File uploaded successfully. ${data.Location}`)
-        return res.status(200).send("File uploaded successfully.")
+
+        // Create a new item in DynamoDB
+        const taskId = uuidv4()
+        const params = {
+          TableName: "Image-statuses",
+          Item: {
+            id: taskId,
+            fileName: fileName,
+            originalS3Path: data.Location,
+            processedS3Path: null,
+            taskState: "created",
+          },
+        }
+
+        dynamoDb.put(params, (error) => {
+          if (error) {
+            console.log(error)
+            return res.status(500).send("Error adding item to DynamoDB.")
+          } else {
+            console.log(`Item added to DynamoDB. taskId: ${taskId}`)
+            return res.status(200).send("File uploaded successfully.")
+          }
+        })
+
+        //send message to SQS ImageQueue.fifo
+        const messageParams = {
+          MessageGroupId: taskId,
+          MessageDeduplicationId: taskId,
+          QueueUrl:
+            "https://sqs.us-east-1.amazonaws.com/299452210264/ImageQueue.fifo",
+          MessageBody: JSON.stringify({ taskId: taskId, taskState: "created" }),
+        }
+
+        sqs.sendMessage(messageParams, (err, data) => {
+          if (err) {
+            console.log("Error sending message to SQS: ", err)
+          } else {
+            console.log("Message sent to SQS:", data.MessageId)
+          }
+        })
       }
     })
-    res.status(200).send("File uploaded successfully")
   }
 })
 
