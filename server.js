@@ -37,18 +37,6 @@ const sqs = new AWS.SQS({ region: "us-east-1" })
  */
 app.use("/api-docs", swaggerUI.serve, swaggerUI.setup(swaggerJsDocs))
 
-/**
- * Setting up a route to handle GET request to /string path.
- * When GET request is received, the function will be executed
- * The function takes two parameters, request and response
- * request is an object that represents the HTTP request and has properties for the request query string, parameters, body, HTTP headers, and so on.
- * response is an object that represents the HTTP response that the Express app sends when it receives an HTTP request.
- * The send function is used to send the HTTP response
- */
-app.get("/string", (req, res) => {
-  res.status(200).send("This is a string")
-})
-
 //create a route to hande POSt reques to /upload path and confirm if file was uploaded successfully
 app.post("/upload", (req, res) => {
   if (!req.files) {
@@ -104,7 +92,12 @@ app.post("/upload", (req, res) => {
           MessageDeduplicationId: taskId,
           QueueUrl:
             "https://sqs.us-east-1.amazonaws.com/299452210264/ImageQueue.fifo",
-          MessageBody: JSON.stringify({ taskId: taskId, taskState: "created" }),
+          MessageBody: JSON.stringify({
+            taskId: taskId,
+            taskState: "created",
+            fileName: fileName,
+            originalS3Path: data.Location,
+          }),
         }
 
         sqs.sendMessage(messageParams, (err, data) => {
