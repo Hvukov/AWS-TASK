@@ -9,6 +9,7 @@ const YAML = require("yamljs")
 const multer = require("multer")
 const AWS = require("aws-sdk")
 const fileUpload = require("express-fileupload")
+const { log } = require("console")
 
 const app = express()
 app.use(express.json())
@@ -24,12 +25,6 @@ const s3 = new AWS.S3({
 const dynamoDb = new AWS.DynamoDB.DocumentClient({ region: "us-east-1" })
 
 const sqs = new AWS.SQS({ region: "us-east-1" })
-/**
- * use is a function that takes a middleware function
- * Function will be executed every time the app receives a request to path
- * swaggerUI.serve is a function provided by the Swagger UI library that serves the Swagger UI documentation
- * swaggerUI.setup is a function provided by the Swagger UI library that configures the Swagger UI documentation with the provided Swagger specification (in this case, swaggerJsDocs
- */
 
 /**
  * For Nodemon to watch YML file we need to add nodemon.json file in the root directory
@@ -42,11 +37,14 @@ app.post("/upload", (req, res) => {
   if (!req.files) {
     res.status(400).send("No file uploaded")
   } else {
-    console.log("req", req.files)
+    //console.log("req", req.files)
     // Get the uploaded file
     const uploadedFile = req.files.file
     const fileName = uploadedFile.name
     const fileData = uploadedFile.data
+
+    console.log("fileName:", fileName)
+    // console.log("fileData:", fileData) //this will print the file data Buffer
 
     // Set up the S3 upload parameters
     const uploadParams = {
@@ -61,7 +59,10 @@ app.post("/upload", (req, res) => {
         console.log(err)
         return res.status(500).send("Error uploading file to S3.")
       } else {
-        console.log(`File uploaded successfully. ${data.Location}`)
+        console.log(
+          `File uploaded successfully.Bucket location is: ${data.Location}`
+        )
+        console.log("File uploaded is:", fileName)
 
         // Create a new item in DynamoDB
         const taskId = uuidv4()
@@ -75,6 +76,9 @@ app.post("/upload", (req, res) => {
             taskState: "created",
           },
         }
+        console.log("data.Location:", data.Location)
+        console.log("server dynamodb id:", taskId)
+        console.log("server dynamodb params:", params)
 
         dynamoDb.put(params, (error) => {
           if (error) {
@@ -82,6 +86,7 @@ app.post("/upload", (req, res) => {
             return res.status(500).send("Error adding item to DynamoDB.")
           } else {
             console.log(`Item added to DynamoDB. taskId: ${taskId}`)
+            console.log("Item state is:", params.Item.taskState)
             return res.status(200).send("File uploaded successfully.")
           }
         })
@@ -99,7 +104,7 @@ app.post("/upload", (req, res) => {
             originalS3Path: data.Location,
           }),
         }
-
+        console.log("server sqs messageParams", messageParams)
         sqs.sendMessage(messageParams, (err, data) => {
           if (err) {
             console.log("Error sending message to SQS: ", err)
@@ -112,4 +117,6 @@ app.post("/upload", (req, res) => {
   }
 })
 
-app.listen(4000, () => console.log("up"))
+app.listen(4000, () =>
+  console.log("Server is up and running. Everything is ok bro!")
+)

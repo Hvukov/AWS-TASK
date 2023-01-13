@@ -15,17 +15,6 @@ info:
 schemes: [http,https]
 
 paths:
-  /string:
-    get:
-      summary: Returns a string
-      description: It is returned as a string
-      responses:
-        200:
-          description: Sucess
-          schema:
-            type: string
-            example: "A fake string"
-
 #File Upload
   /upload:
     post:
