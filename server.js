@@ -3,20 +3,21 @@ const { request } = require("https")
 const swaggerUI = require("swagger-ui-express")
 const fs = require("fs")
 const uuidv4 = require("uuid").v4
+const morgan = require("morgan")
 
 //For loading the YAML file
 const YAML = require("yamljs")
 const multer = require("multer")
 const AWS = require("aws-sdk")
 const fileUpload = require("express-fileupload")
-const { log } = require("console")
 
 const app = express()
 app.use(express.json())
 app.use(fileUpload())
+app.use(morgan("dev"))
 
 //Load the file and specify the location
-const swaggerJsDocs = YAML.load("./api.yaml")
+const swaggerJsDocs = YAML.load("./view/api.yaml")
 
 const s3 = new AWS.S3({
   region: "us-east-1",

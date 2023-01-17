@@ -1,5 +1,4 @@
 const AWS = require("aws-sdk")
-const { log } = require("console")
 const sharp = require("sharp")
 
 AWS.config.update({
