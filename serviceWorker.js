@@ -95,7 +95,7 @@ sqs.receiveMessage(params, function (err, data) {
         })
 
         //check if the image is successfully uploaded to S3
-        //change the dynamodb taskState to "completed"
+        //change the dynamodb taskState to "done"
 
         const updateTaskStateCompleted = {
           TableName: "Image-statuses",
@@ -104,7 +104,7 @@ sqs.receiveMessage(params, function (err, data) {
           },
           UpdateExpression: "set taskState = :s",
           ExpressionAttributeValues: {
-            ":s": "completed",
+            ":s": "done",
           },
           ReturnValues: "UPDATED_NEW",
         }
@@ -113,7 +113,7 @@ sqs.receiveMessage(params, function (err, data) {
             if (err) {
               console.log(err)
             } else {
-              console.log("taskState updated to completed")
+              console.log("taskState updated to done")
             }
           })
         }, 1000)

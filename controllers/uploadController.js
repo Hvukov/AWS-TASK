@@ -55,7 +55,9 @@ const uploadHandler = (req, res) => {
           } else {
             console.log(`Item added to DynamoDB. taskId: ${taskId}`)
             console.log("Item state is:", params.Item.taskState)
-            return res.status(200).send("File uploaded successfully.")
+            return res
+              .status(200)
+              .send({ message: "File uploaded successfully", taskId: taskId })
           }
         })
 

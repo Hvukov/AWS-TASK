@@ -31,5 +31,31 @@ paths:
         200:
           description: "OK"
 
+#Check task state
+  paths:
+  /state/{id}:
+    get:
+      summary: Get task status of image processing
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID of the task to retrieve
+      responses:
+        200:
+          description: OK
+          schema:
+            type: object
+            properties:
+              taskId:
+                type: string
+              taskState:
+                type: string
+              originalS3Path:
+                type: string
+              processedS3Path:
+                type: string
 
 
