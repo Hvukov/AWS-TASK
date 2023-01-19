@@ -1,5 +1,6 @@
 const { s3, dynamoDb, sqs } = require("../models/aws.js")
 const uuidv4 = require("uuid").v4
+const { handleServiceWorker } = require("../serviceWorker")
 
 const uploadHandler = (req, res) => {
   if (!req.files) {
@@ -80,6 +81,7 @@ const uploadHandler = (req, res) => {
             console.log("Error sending message to SQS: ", err)
           } else {
             console.log("Message sent to SQS:", data.MessageId)
+            handleServiceWorker()
           }
         })
       }
