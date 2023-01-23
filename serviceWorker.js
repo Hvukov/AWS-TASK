@@ -21,38 +21,46 @@ const params = {
   WaitTimeSeconds: 0,
 }
 
+/**
+ * @description This function is service worker that is triggered by SQS
+ */
 const handleServiceWorker = () => {
+  /**
+   * @description This function is triggered by SQS
+   */
   sqs.receiveMessage(params, function (err, data) {
     if (err) {
       console.log("Receive Error", err)
     } else {
-      //read message
-      console.log("data:", data)
-      console.log("Received message", data.Messages[0].Body)
-
-      //log MessageBody.fileName
       console.log("fileName:", JSON.parse(data.Messages[0].Body).fileName)
 
       const s3FileName = JSON.parse(data.Messages[0].Body).fileName
       const dynamoDbId = JSON.parse(data.Messages[0].Body).taskId
       const sqsDataMessageReceiptHandle = data.Messages[0].ReceiptHandle
       console.log("dynamoDbId:", dynamoDbId)
-      //get file from S3
+
       const s3Params = {
         Bucket: "petar-bucket-1",
         Key: s3FileName,
       }
 
+      /**
+       *  @description get image from S3 petar-bucket-1
+       */
       s3.getObject(s3Params, async function (err, data) {
         if (err) {
           console.log(err, err.stack)
         } else {
-          //flip image using sharp
+          /**
+           * @description flip image using sharp
+           */
           const flippedImageBuffer = await sharp(data.Body)
             .rotate(180)
             .toBuffer()
 
-          //change the dynamodb taskState to "in-process"
+          /**
+           * @description update dynamodb taskState to "in-process"
+           */
           const updateTaskState = {
             TableName: "Image-statuses",
             Key: {
@@ -77,7 +85,9 @@ const handleServiceWorker = () => {
             }
           })
 
-          //upload the flipped file to S3 petar-bucket-1
+          /**
+           * @description save flipped image to S3 petar-bucket-2
+           */
           const flippedParams = {
             Bucket: "petar-bucket-2",
             Key: s3FileName,
@@ -91,8 +101,9 @@ const handleServiceWorker = () => {
             }
           })
 
-          //check if the image is successfully uploaded to S3
-          //change the dynamodb taskState to "done"
+          /**
+           * @description update dynamodb taskState to "done"
+           */
 
           const updateTaskStateCompleted = {
             TableName: "Image-statuses",
@@ -115,7 +126,9 @@ const handleServiceWorker = () => {
             })
           }, 1000)
 
-          //delete message from SQS
+          /**
+           * @description delete message from SQS
+           */
           const deleteParams = {
             QueueUrl: queueUrl,
             ReceiptHandle: sqsDataMessageReceiptHandle,

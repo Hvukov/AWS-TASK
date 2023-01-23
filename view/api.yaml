@@ -32,6 +32,8 @@ paths:
           description: "OK"
         400:
           description: "User error"
+        422:
+          description: "Wrong file type"
         500:
           description: "Server error"
 

@@ -1,3 +1,7 @@
+/**
+ * @description This file is used to create the AWS SDK instances
+ */
+
 const AWS = require("aws-sdk")
 
 const s3 = new AWS.S3({

@@ -2,27 +2,37 @@ const { s3, dynamoDb, sqs } = require("../models/aws.js")
 const uuidv4 = require("uuid").v4
 const { handleServiceWorker } = require("../serviceWorker")
 
+/**
+ * @description This function is used to upload an image to S3 and add metadata to DynamoDB
+ */
 const uploadHandler = (req, res) => {
   if (!req.files) {
     res.status(400).send("No file uploaded")
+  } else if (
+    !req.files.file.name.match(
+      /\.(jpg|jpeg|png|gif|tiff|psd|raw|bmp|heiff|indd|svg)$/i
+    )
+  ) {
+    res.status(422).send("Wrong file type. Only images are allowed.")
   } else {
     //console.log("req", req.files)
-    // Get the uploaded file
+
     const uploadedFile = req.files.file
+
     const fileName = uploadedFile.name
     const fileData = uploadedFile.data
 
     console.log("fileName:", fileName)
-    // console.log("fileData:", fileData) //this will print the file data Buffer
 
-    // Set up the S3 upload parameters
     const uploadParams = {
       Bucket: "petar-bucket-1",
       Key: fileName,
       Body: fileData,
     }
 
-    // Upload the file to S3
+    /**
+     * @description Upload image to S3
+     */
     s3.upload(uploadParams, (err, data) => {
       if (err) {
         console.log(err)
@@ -33,7 +43,9 @@ const uploadHandler = (req, res) => {
         )
         console.log("File uploaded is:", fileName)
 
-        // Create a new item in DynamoDB
+        /**
+         * @description Add metadata to DynamoDB
+         */
         const taskId = uuidv4()
         const params = {
           TableName: "Image-statuses",
@@ -45,9 +57,6 @@ const uploadHandler = (req, res) => {
             taskState: "created",
           },
         }
-        console.log("data.Location:", data.Location)
-        console.log("server dynamodb id:", taskId)
-        console.log("server dynamodb params:", params)
 
         dynamoDb.put(params, (error) => {
           if (error) {
@@ -62,7 +71,9 @@ const uploadHandler = (req, res) => {
           }
         })
 
-        //send message to SQS ImageQueue.fifo
+        /**
+         * @description Send message to SQS
+         */
         const messageParams = {
           MessageGroupId: taskId,
           MessageDeduplicationId: taskId,

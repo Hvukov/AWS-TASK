@@ -1,5 +1,8 @@
 const { dynamoDb } = require("../models/aws.js")
 
+/**
+ * @description This function is used to get an item from DynamoDB
+ */
 const getHandler = (req, res) => {
   const params = {
     TableName: "Image-statuses",
@@ -8,6 +11,9 @@ const getHandler = (req, res) => {
     },
   }
 
+  /**
+   * @description Get item from DynamoDB
+   */
   dynamoDb.get(params, (err, data) => {
     if (err) {
       console.log(err)
@@ -15,9 +21,6 @@ const getHandler = (req, res) => {
     } else {
       console.log("Item retrieved from DynamoDB")
       console.log("Item state is:", data.Item.taskState)
-      console.log("Item file name is:", data.Item.fileName)
-      console.log("Item original S3 path is:", data.Item.originalS3Path)
-      console.log("Item processed S3 path is:", data.Item.processedS3Path)
       return res.status(200).send(data.Item)
     }
   })
