@@ -36,6 +36,7 @@ const uploadHandler = (req, res) => {
     s3.upload(uploadParams, (err, data) => {
       if (err) {
         console.log(err)
+        console.log("kREDENTILS", s3.config.credentials)
         return res.status(500).send("Error uploading file to S3.")
       } else {
         console.log(
